@@ -15,3 +15,8 @@
     {:word "bar"
      :type :word
      :length 3}]})
+
+(def action-example-1
+  {:type :key
+   :key "a"
+   :length 1})
