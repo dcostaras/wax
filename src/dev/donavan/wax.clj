@@ -21,6 +21,21 @@
    :key "a"
    :length 1})
 
+(defn action->transformation
+  [{action-length :length :as action}]
+  (sp/terminal
+   (fn [{node-length :length :as node}]
+     (if (< #p action-length
+            #p node-length)
+       (do
+         ;; (prn (:length node))
+         ;; (prn (:key action))
+         ;; (prn node)
+         ;; (prn )
+         #p (document->index node)
+         node)
+       node))))
+
 (defn document->string
   [document]
   (prn '--------------------------------------------------)
