@@ -21,6 +21,24 @@
    :key "a"
    :length 1})
 
+(defn document->index
+  ;; TODO spec arg checking with guardrails
+  ;; TODO specter this
+  [{[s e] :selection :as document}]
+  (let [lengths (map :length (:script document))]
+    (loop [lengths lengths
+           running-total 0
+           index 0]
+
+      (cond
+        (> (first lengths) e)
+        index
+
+        :else
+        (recur (rest lengths)
+               (+ running-total (first lengths))
+               (inc index))))))
+
 (defn action->transformation
   [{action-length :length :as action}]
   (sp/terminal
