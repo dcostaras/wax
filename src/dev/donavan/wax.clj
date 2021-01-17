@@ -20,3 +20,10 @@
   {:type :key
    :key "a"
    :length 1})
+
+(defn document->string
+  [document]
+  (prn '--------------------------------------------------)
+  (sp/multi-transform
+   (sp/multi-path (action->transformation action-example-1))
+   document))
