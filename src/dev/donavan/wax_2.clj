@@ -1,7 +1,7 @@
 (ns dev.donavan.wax-2
   (:require [com.rpl.specter :as s]))
 
-;; Keeping selection up to date as a path into the document
+;;;; Keeping selection up to date as a path into the document
 
 (defn run
   [doc]
@@ -10,9 +10,9 @@
        [(:selection doc)
         (s/terminal
          (fn [x]
-           ;; (prn x)
+           (prn ['terminal x])
            [{:type :word
-             :text "b"}]))
+             :text "a"}]))
         ]
        doc)
       (:contents)
@@ -27,7 +27,13 @@
    doc))
 
 
-;; Insert within a word
+
+
+
+
+
+
+;;; Insert within a word
 ;; (let [doc {:selection [:contents 0 :contents 0 :text (s/srange 0 1)]
 ;;            :action {:insert "y"}
 ;;            :contents [{:type :sentance
@@ -52,42 +58,92 @@
 (comment
   (do
 
-    (s/defnav selection* [[a b c]]
+    (s/defnav selection* [a b [c d e]]
       (select*
        [this structure next-fn]
        (throw (ex-info "not done" {}))
        (next-fn structure))
       (transform*
        [this structure next-fn]
-       (let [res* (next-fn structure)
-             left (-> structure
-                      (first)
-                      (update :text subs a b))
-             right (-> structure
-                       (last)
-                       (update :text subs c))
-             res (-> []
+       (let [unmodified-left (s/select-one
+                              (s/srange 0 a)
+                              structure)
+             unmodified-right (s/select-one
+                               (s/srange-dynamic (constantly b) count)
+                               structure)
+             left (->> structure
+                       (s/select-one (s/nthpath a))
+                       (s/transform
+                        :text
+                        (fn [x]
+                          (subs x 0 d))))
+             right (->> structure
+                        (s/select-one (s/nthpath (dec b)))
+                        (s/transform
+                         :text
+                         (fn [x]
+                           (subs x (inc d)))))
+             structure* (->> structure
+                             (s/select-one (s/srange a b))
+                             (s/multi-transform
+                              (s/multi-path
+                               [s/FIRST
+                                :text
+                                (s/terminal
+                                 (fn foo [x]
+                                   (subs x d)))]
+                               [s/LAST
+                                :text
+                                (s/terminal
+                                 (fn bar [x]
+                                   (subs x 0 e)))])))
+             res* (next-fn structure*)
+             res (-> unmodified-left
+
                      (conj left)
                      (into res*)
-                     (conj right))]
+                     (conj right)
+
+                     ;; If we keep using vectors we can use rrb-vectors for efficient concat
+                     (into unmodified-right))]
          res)))
 
     (defn selection
-      [a b substrings]
-      [(s/srange a b)
-       (selection* substrings)])
+      [a b substrings path]
+      [ ;; (s/srange a b)
+       (selection* a b substrings)
+       path])
 
+    (s/defnav foo [a b]
+      (select*
+       [this structure next-fn]
+       (throw (ex-info "not done" {}))
+       (next-fn structure))
+      (transform*
+       [this structure next-fn]
+       (next-fn structure)))
 
     (let [doc {:selection [:contents
-                           (selection 0 2 [0 1 2])
-                           (fn [x]
-                             ;; (prn ['x x])
-                             x)
-                           ]
-               :contents [{:type :word
+                           (s/multi-path
+                            ;; FIXME how to edit changed section of document, e.g., how to recombine
+                            ;; {:type :word, :text "b"} {:type :word, :text "a"} {:type :word, :text
+                            ;; "z"} into "baz.
+                            (selection
+                             1 3 [0 1 2]
+                             (fn baz [x]
+                               (prn ['selection x])
+                               x))
+                            (fn [x]
+                              (prn ['after x])
+                              x))]
+               :contents [{:type :link
                            :text "foo"}
+                          {:type :word
+                           :text "bar"}
+                          {:type :word
+                           :text "baz"}
                           {:type :link
-                           :text "bar"}]}]
+                           :text "qux"}]}]
       (run doc))))
 
 ;; Pure view version
@@ -116,7 +172,7 @@
 
 
 
-;;; text navigator
+;;; string text subselect navigator
 (comment
   (do
     (s/defnav text []
