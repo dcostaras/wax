@@ -1,0 +1,4 @@
+{:tasks
+ {start
+  {:doc "Start the dev environment"
+   :task (clojure "-M:nrepl")}}}

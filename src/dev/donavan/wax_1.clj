@@ -1,5 +1,7 @@
-(ns dev.donavan.wax
-  (:require [com.rpl.specter :as sp]))
+(ns dev.donavan.wax-1
+  (:require [com.rpl.specter :as s]))
+
+;; Explicit length tracking
 
 (def document-example-2
   {:length 7
@@ -41,7 +43,7 @@
 
 (defn action->transformation
   [{action-length :length :as action}]
-  (sp/terminal
+  (s/terminal
    (fn [{node-length :length :as node}]
      (if (< #p action-length
             #p node-length)
@@ -57,6 +59,6 @@
 (defn document->string
   [document]
   (prn '--------------------------------------------------)
-  (sp/multi-transform
-   (sp/multi-path (action->transformation action-example-1))
+  (s/multi-transform
+   (s/multi-path (action->transformation action-example-1))
    document))
