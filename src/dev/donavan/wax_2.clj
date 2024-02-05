@@ -11,7 +11,8 @@
         (s/terminal
          (fn [x]
            ;; (prn x)
-           "b"))
+           [{:type :word
+             :text "b"}]))
         ]
        doc)
       (:contents)
@@ -50,17 +51,34 @@
 (let [
       doc {:selection [:contents
                        (s/srange 0 2)
+
+                       (s/view (fn [x]
+                                 (let [left (-> x
+                                                (nth 0)
+                                                (update :text subs 0 2)
+
+                                                )
+                                       inner (-> x
+                                                 (update-in [0 :text] subs 2)
+                                                 (update-in [1 :text] subs 0 1)
+                                                 )
+                                       right (-> x
+                                                 (nth 1)
+                                                 (update :text subs 1)
+
+                                                 )]
+                                   (-> [left]
+                                       (into inner)
+                                       (conj right)
+                                       ))))
+                       (s/srange 1 3)
                        (fn [x]
                          (prn x)
                          x)
-                       ;; (s/view (fn [x]
-                       ;;           (-> x
-                       ;;               (update-in [0 :text] subs 2)
-                       ;;               (update-in [1 :text] subs 0 1))))
                        ]
            :contents [{:type :word
                        :text "foo"}
-                      {:type :word
+                      {:type :link
                        :text "bar"}]}]
   (run doc))
 
